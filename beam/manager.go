@@ -151,9 +151,9 @@ func (wm *WalletManager) GetTransactionsByHeight(height uint64) ([]*Transaction,
 }
 
 func (wm WalletManager) GetRemoteBlockByHeight(height uint64) (*Block, error) {
-	if wm.Config.enableserver {
-		return nil, fmt.Errorf("server mode can not create remote address, use create local address")
-	}
+	//if wm.Config.enableserver {
+	//	return nil, fmt.Errorf("server mode can not create remote address, use create local address")
+	//}
 
 	return wm.client.GetBlockByHeight(height)
 }
@@ -201,22 +201,27 @@ func (wm *WalletManager) SummaryWallets() {
 
 	wm.Log.Infof("[Summary Task Start]------%s", common.TimeFormat("2006-01-02 15:04:05"))
 
-	err := wm.summaryWalletProcess()
+	txId, _, _, err := wm.SummaryWalletProcess(wm.Config.summaryaddress)
 	if err != nil {
 		wm.Log.Errorf("summary wallet unexpected error: %v", err)
 	}
 
-	wm.Log.Infof("[Summary Task End]------%s", common.TimeFormat("2006-01-02 15:04:05"))
+	wm.Log.Infof("[Summary Task End] txId =%s ------%s", txId, common.TimeFormat("2006-01-02 15:04:05"))
 
 	//:清楚超时的交易
 	wm.ClearExpireTx()
 }
 
-func (wm *WalletManager) summaryWalletProcess() error {
+//汇总到目标地址
+//return txId,summaryAmount,feeAmount,err
+func (wm *WalletManager) SummaryWalletProcess(summaryToAddress string) (string, string, string, error) {
+	if summaryToAddress == "" {
+		return "", "", "", fmt.Errorf("param summaryToAddress is null")
 
+	}
 	status, err := wm.walletClient.GetWalletStatus()
 	if err != nil {
-		return fmt.Errorf("get local wallet balance failed, unexpected error: %v", err)
+		return "", "", "", fmt.Errorf("get local wallet balance failed, unexpected error: %v", err)
 	}
 
 	balance := common.IntToDecimals(int64(status.Available), wm.Decimal())
@@ -245,39 +250,41 @@ func (wm *WalletManager) summaryWalletProcess() error {
 		//减去手续费
 		sumAmount_BI.Sub(addrBalance_BI, fixFees)
 		if sumAmount_BI.Cmp(big.NewInt(0)) <= 0 {
-			return fmt.Errorf("summary amount not enough pay fee, ")
+			return "", "", "", fmt.Errorf("summary amount not enough pay fee, ")
 		}
 
 		//取一个地址作为发送
 		addresses, err := wm.walletClient.GetAddressList()
 		if err != nil {
-			return err
+			return "", "", "", err
 		}
 
 		if addresses == nil || len(addresses) == 0 {
-			return fmt.Errorf("wallet address is not created")
+			return "", "", "", fmt.Errorf("wallet address is not created")
 		}
 
 		from := addresses[0]
 
-		txid, err := wm.walletClient.SendTransaction(from, wm.Config.summaryaddress, sumAmount_BI.Uint64(), fixFees.Uint64(), "")
+		txid, err := wm.walletClient.SendTransaction(from, summaryToAddress, sumAmount_BI.Uint64(), fixFees.Uint64(), "")
 		if err != nil {
-			return err
+			return "", "", "", err
 		}
 
 		wm.Log.Infof("[Success] txid: %s", txid)
-
-		//完成一次汇总备份一次wallet.db
-		backErr := wm.BackupWalletData()
-		if backErr != nil {
-			wm.Log.Infof("Backup wallet data failed: %v", backErr)
-		} else {
-			wm.Log.Infof("Backup wallet data success")
-		}
+		fee_dec := decimal.NewFromBigInt(fixFees, wm.Decimal()*-1)
+		summary_dec := decimal.NewFromBigInt(sumAmount_BI, wm.Decimal()*-1).Add(feesDec).Neg()
+		return txid, summary_dec.String(), fee_dec.String(), nil
+		////完成一次汇总备份一次wallet.db
+		//backErr := wm.BackupWalletData()
+		//if backErr != nil {
+		//	wm.Log.Infof("Backup wallet data failed: %v", backErr)
+		//} else {
+		//	wm.Log.Infof("Backup wallet data success")
+		//}
 
 	}
 
-	return nil
+	return "", "", "", nil
 }
 
 //ClearExpireTx

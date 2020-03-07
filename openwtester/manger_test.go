@@ -8,7 +8,7 @@ import (
 )
 
 func TestCreateLocalAddress(t *testing.T) {
-	addrs, err := clientNode.CreateLocalWalletAddress(10, 2)
+	addrs, err := clientNode.CreateLocalWalletAddress(1, 2)
 	if err != nil {
 		t.Errorf("CreateRemoteWalletAddress failed unexpected error: %v\n", err)
 		return
@@ -86,11 +86,11 @@ func TestGetRemoteBlockByHeight(t *testing.T) {
 func TestSendTransaction(t *testing.T) {
 
 	rawTx := &openwallet.RawTransaction{
-		Coin:openwallet.Coin{
-			Symbol:"BEAM",
+		Coin: openwallet.Coin{
+			Symbol: "BEAM",
 		},
 		To: map[string]string{
-			"25ab70f47a42061565a5a6a491426c087bd43ed8062e874ce540d8abde3e4d5e458": "0.0000001",
+			"191dfb3e032c47571914c8f5d5e270c027fab63aa4c5552390eeb096ec6153cc17d": "0.0000001",
 		},
 		FeeRate: "",
 	}
@@ -137,6 +137,10 @@ func TestGetBalance(t *testing.T) {
 
 func TestStartSummaryWallet(t *testing.T) {
 
-	serverNode.StartSummaryWallet()
+	txid, summaryAmount, feeAmount, err := clientNode.SummaryWalletProcess("22050821304db464e209b0dba622ffe3c711123471f0b300c7cc979df48e7a9a8a4")
+	if err != nil {
+		panic(err)
+	}
+	log.Info("txid=", txid, " summaryAmount=", summaryAmount, " feeAmount = ", feeAmount)
 
 }

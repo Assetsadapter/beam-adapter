@@ -1,8 +1,8 @@
 package openwtester
 
 import (
+	"github.com/Assetsadapter/beam-adapter/beam"
 	"github.com/astaxie/beego/config"
-	"github.com/blocktree/beam-adapter/beam"
 	"path/filepath"
 	"time"
 )
@@ -15,7 +15,8 @@ var (
 func init() {
 
 	//serverNode = testNewWalletManager("server.ini")
-	clientNode = testNewWalletManager("client.ini")
+	//clientNode = testNewWalletManager("client.ini")
+	clientNode = testNewWalletManager("server.ini")
 	time.Sleep(1 * time.Second)
 }
 
@@ -32,4 +33,3 @@ func testNewWalletManager(conf string) *beam.WalletManager {
 	wm.LoadAssetsConfig(c)
 	return wm
 }
-

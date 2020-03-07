@@ -1,8 +1,8 @@
 package commands
 
 import (
+	"github.com/Assetsadapter/beam-adapter/beam"
 	"github.com/astaxie/beego/config"
-	"github.com/blocktree/beam-adapter/beam"
 	"github.com/blocktree/openwallet/log"
 	"gopkg.in/urfave/cli.v1"
 )

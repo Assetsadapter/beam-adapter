@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/blocktree/beam-adapter/commands"
+	"github.com/Assetsadapter/beam-adapter/commands"
 	"gopkg.in/urfave/cli.v1"
 	"os"
 	"path/filepath"
@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	Identifier   = "openw-beam" // Client identifier to advertise over the network
+	Identifier = "openw-beam" // Client identifier to advertise over the network
 )
 
 var (
@@ -90,4 +90,8 @@ func main() {
 //openwbeam
 func openwbeam(ctx *cli.Context) error {
 	return nil
+}
+
+func main2() {
+
 }

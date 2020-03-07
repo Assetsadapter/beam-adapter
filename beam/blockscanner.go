@@ -248,7 +248,7 @@ func (bs *BEAMBlockScanner) ScanBlockTask() {
 			continue
 		}
 
-		remoteBlock, err := bs.wm.GetRemoteBlockByHeight(currentHeight)
+		remoteBlock, err := bs.GetBlockByHeight(currentHeight)
 		if err != nil {
 			bs.wm.Log.Std.Error("remote server is disconnected")
 			break
@@ -655,16 +655,19 @@ func (bs *BEAMBlockScanner) InitExtractResult(tx *Transaction, sourceKey string,
 	reason := ""
 
 	amount := decimal.Zero
+	feeAmount := decimal.Zero
 	coin := openwallet.Coin{
 		Symbol:     bs.wm.Symbol(),
 		IsContract: false,
 	}
 	value := new(big.Int)
 	value.SetUint64(tx.Value)
+	fee := new(big.Int)
+	fee.SetUint64(tx.Fee)
 	amount = common.BigIntToDecimals(value, bs.wm.Decimal())
-
+	feeAmount = common.BigIntToDecimals(fee, bs.wm.Decimal())
 	transx := &openwallet.Transaction{
-		Fees:        "0",
+		Fees:        feeAmount.String(),
 		Coin:        coin,
 		BlockHash:   tx.BlockHash,
 		BlockHeight: tx.BlockHeight,

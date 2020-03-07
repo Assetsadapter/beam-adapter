@@ -1,4 +1,4 @@
-module github.com/blocktree/beam-adapter
+module github.com/Assetsadapter/beam-adapter
 
 go 1.12
 

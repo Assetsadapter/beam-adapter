@@ -16,7 +16,7 @@
 package openwtester
 
 import (
-	"github.com/blocktree/beam-adapter/beam"
+	"github.com/Assetsadapter/beam-adapter/beam"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/openwallet"
 	"testing"
@@ -57,7 +57,7 @@ func TestSubscribeAddress(t *testing.T) {
 		endRunning = make(chan bool, 1)
 		symbol     = "BEAM"
 		addrs      = map[string]string{
-			"1b585f1d77f9b4e01bad9b7cfccb6f4297c341848ea0d13b64c4b7f61ec414aa57": "sender",
+			"1b585f1d77f9b4e01bad9b7cfccb6f4297c341848ea0d13b64c4b7f61ec414aa57":  "sender",
 			"360c3d573ef2dfa0760ddb30956e01ac7de7ff140f08b8f80afc7604df9810821b7": "receiver",
 		}
 	)
