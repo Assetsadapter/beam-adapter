@@ -151,6 +151,7 @@ func (c *WalletClient) CreateAddress() (string, error) {
 
 	request := map[string]interface{}{
 		"expiration": "never",
+		"comment":    "self", //标记自己创建的地址
 	}
 
 	r, err := c.call("create_address", request)
@@ -294,7 +295,8 @@ func (c *WalletClient) GetAddressList() ([]string, error) {
 		for _, a := range r.Array() {
 			own := a.Get("own").Bool()
 			expired := a.Get("expired").Bool()
-			if own && expired == false {
+			commet := a.Get("comment").String()
+			if own && expired == false && "self" == commet {
 				addrs = append(addrs, a.Get("address").String())
 			}
 
@@ -454,4 +456,18 @@ func (c *WalletClient) CancelTx(txid string) (bool, error) {
 	}
 
 	return r.Bool(), nil
+}
+
+//CancelTx 取消交易
+func (c *WalletClient) ValidateAddress(address string) (bool, error) {
+	request := map[string]interface{}{
+		"address": address,
+	}
+
+	r, err := c.call("validate_address", request)
+	if err != nil {
+		return false, err
+	}
+
+	return r.Get("is_valid").Bool(), nil
 }

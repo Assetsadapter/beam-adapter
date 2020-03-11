@@ -11,6 +11,7 @@ require (
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/imroc/req v0.2.3
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/mr-tron/base58 v1.1.1
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
 	github.com/tidwall/gjson v1.2.1
 	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f // indirect

@@ -3,7 +3,9 @@ package beam
 import (
 	"encoding/json"
 	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/openwallet"
 	"github.com/blocktree/openwallet/owtp"
+	"strconv"
 )
 
 type Server struct {
@@ -42,6 +44,10 @@ func NewServer(wm *WalletManager) (*Server, error) {
 	node.HandleFunc("getWalletBalance", t.getWalletBalance)
 	node.HandleFunc("getWalletAddress", t.getWalletAddress)
 	node.HandleFunc("getBlockByHeight", t.getBlockByHeight)
+	node.HandleFunc("getWalletStatus", t.GetWalletStatus)
+	node.HandleFunc("transFCoin", t.transFCoin)
+	node.HandleFunc("summaryToAddress", t.summaryToAddress)
+	node.HandleFunc("validateAddress", t.validateAddress)
 
 	node.SetCloseHandler(func(n *owtp.OWTPNode, peer owtp.PeerInfo) {
 		if t.disconnectHandler != nil {
@@ -93,10 +99,17 @@ func (server *Server) checkTrustNode(nodeID string) bool {
 
 	return true
 }
+
+//检查ip配置
+func (server *Server) checkIP(IP string) bool {
+	//server.config.DefaultConfig
+	return true
+}
+
 /*********** 本地路由方法实现 ***********/
 
 func (server *Server) newNodeJoin(ctx *owtp.Context) {
-
+	server.wm.Log.Infof("node joining:%s", ctx.RemoteAddress)
 	if !server.checkTrustNode(ctx.PID) {
 		ctx.Response(nil, owtp.ErrDenialOfService, "the node is not trusted")
 		return
@@ -158,6 +171,12 @@ func (server *Server) getTransaction(ctx *owtp.Context) {
 }
 
 func (server *Server) createBatchAddress(ctx *owtp.Context) {
+
+	if !server.checkTrustNode(ctx.PID) {
+		ctx.Response(nil, owtp.ErrDenialOfService, "the node is not trusted")
+		return
+	}
+
 	count := ctx.Params().Get("count").Uint()
 	workerSize := ctx.Params().Get("workerSize").Uint()
 	server.wm.Log.Infof("Client call [createBatchAddress]")
@@ -189,7 +208,7 @@ func (server *Server) getWalletBalance(ctx *owtp.Context) {
 		return
 	}
 
-	result := map[string]interface{} {
+	result := map[string]interface{}{
 		"balance": balance,
 	}
 
@@ -219,11 +238,9 @@ func (server *Server) getWalletAddress(ctx *owtp.Context) {
 	server.wm.Log.Infof("---------------------------------------")
 }
 
-
 func (server *Server) getBlockByHeight(ctx *owtp.Context) {
 
 	//server.wm.Log.Infof("Client call [getTransactionsByHeight]")
-
 	if !server.checkTrustNode(ctx.PID) {
 		ctx.Response(nil, owtp.ErrDenialOfService, "the node is not trusted")
 		return
@@ -237,6 +254,96 @@ func (server *Server) getBlockByHeight(ctx *owtp.Context) {
 	}
 
 	ctx.Response(block, owtp.StatusSuccess, "success")
+
+	//server.wm.Log.Infof("---------------------------------------")
+}
+
+func (server *Server) GetWalletStatus(ctx *owtp.Context) {
+
+	//server.wm.Log.Infof("Client call [getTransactionsByHeight]")
+
+	if !server.checkTrustNode(ctx.PID) {
+		ctx.Response(nil, owtp.ErrDenialOfService, "the node is not trusted")
+		return
+	}
+
+	wallet, err := server.wm.walletClient.GetWalletStatus()
+	if err != nil {
+		ctx.Response(nil, owtp.ErrCustomError, err.Error())
+		return
+	}
+
+	ctx.Response(wallet, owtp.StatusSuccess, "success")
+
+	//server.wm.Log.Infof("---------------------------------------")
+}
+
+//转币
+func (server *Server) transFCoin(ctx *owtp.Context) {
+
+	if !server.checkTrustNode(ctx.PID) {
+		ctx.Response(nil, owtp.ErrDenialOfService, "the node is not trusted")
+		return
+	}
+
+	toAddress := ctx.Params().Get("toAddress").String()
+	toAmount := ctx.Params().Get("toAmount").String()
+
+	rawTx := &openwallet.RawTransaction{
+		To: map[string]string{
+			toAddress: toAmount,
+		},
+		FeeRate: "",
+	}
+	tx, err := server.wm.TxDecoder.SubmitRawTransaction(nil, rawTx)
+	if err != nil {
+		ctx.Response(nil, owtp.ErrCustomError, err.Error())
+		return
+	}
+	result := map[string]interface{}{
+		"txId": tx.TxID,
+	}
+	ctx.Response(result, owtp.StatusSuccess, "success")
+}
+
+//汇总币到地址
+func (server *Server) summaryToAddress(ctx *owtp.Context) {
+
+	//server.wm.Log.Infof("Client call [getTransactionsByHeight]")
+
+	if !server.checkTrustNode(ctx.PID) {
+		ctx.Response(nil, owtp.ErrDenialOfService, "the node is not trusted")
+		return
+	}
+
+	summaryAddress := ctx.Params().Get("summaryAddress").String()
+	txId, summaryAmount, feeAmount, err := server.wm.SummaryWalletProcess(summaryAddress)
+	if err != nil {
+		ctx.Response(nil, owtp.ErrCustomError, err.Error())
+		return
+	}
+
+	ctx.Response(map[string]string{"txId": txId, "summaryAmount": summaryAmount, "feeAmount": feeAmount}, owtp.StatusSuccess, "success")
+
+	//server.wm.Log.Infof("---------------------------------------")
+}
+
+//验证地址格式
+func (server *Server) validateAddress(ctx *owtp.Context) {
+
+	if !server.checkTrustNode(ctx.PID) {
+		ctx.Response(nil, owtp.ErrDenialOfService, "the node is not trusted")
+		return
+	}
+
+	address := ctx.Params().Get("address").String()
+	isValid, err := server.wm.ValidateAddress(address)
+	if err != nil {
+		ctx.Response(nil, owtp.ErrCustomError, err.Error())
+		return
+	}
+
+	ctx.Response(map[string]string{"isValid": strconv.FormatBool(isValid)}, owtp.StatusSuccess, "success")
 
 	//server.wm.Log.Infof("---------------------------------------")
 }

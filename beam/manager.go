@@ -10,6 +10,7 @@ import (
 	"github.com/blocktree/openwallet/timer"
 	"github.com/shopspring/decimal"
 	"math/big"
+	"strconv"
 	"time"
 )
 
@@ -120,7 +121,7 @@ func (wm *WalletManager) GetTransactionsByHeight(height uint64) ([]*Transaction,
 	trxMap := make(map[string]*Transaction, 0)
 	trxs := make([]*Transaction, 0)
 
-	localTrxs, err := wm.walletClient.GetTransactionsByHeight(height)
+	localTrxs, err := wm.client.GetTransactionsByHeight(height)
 	if err != nil {
 		wm.Log.Errorf("Local GetTransactionsByHeight failed, unexpected error %v", err)
 		return nil, err
@@ -216,7 +217,7 @@ func (wm *WalletManager) SummaryWallets() {
 //return txId,summaryAmount,feeAmount,err
 func (wm *WalletManager) SummaryWalletProcess(summaryToAddress string) (string, string, string, error) {
 	if summaryToAddress == "" {
-		return "", "", "", fmt.Errorf("param summaryToAddress is null")
+		return "", "", "", fmt.Errorf("param SummaryToAddress is null")
 
 	}
 	status, err := wm.walletClient.GetWalletStatus()
@@ -273,14 +274,14 @@ func (wm *WalletManager) SummaryWalletProcess(summaryToAddress string) (string, 
 		wm.Log.Infof("[Success] txid: %s", txid)
 		fee_dec := decimal.NewFromBigInt(fixFees, wm.Decimal()*-1)
 		summary_dec := decimal.NewFromBigInt(sumAmount_BI, wm.Decimal()*-1).Add(feesDec).Neg()
+		backErr := wm.BackupWalletData()
+		if backErr != nil {
+			wm.Log.Infof("Backup wallet data failed: %v", backErr)
+		} else {
+			wm.Log.Infof("Backup wallet data success")
+		}
 		return txid, summary_dec.String(), fee_dec.String(), nil
-		////完成一次汇总备份一次wallet.db
-		//backErr := wm.BackupWalletData()
-		//if backErr != nil {
-		//	wm.Log.Infof("Backup wallet data failed: %v", backErr)
-		//} else {
-		//	wm.Log.Infof("Backup wallet data success")
-		//}
+		//完成一次汇总备份一次wallet.db
 
 	}
 
@@ -322,8 +323,43 @@ func (wm *WalletManager) ClearExpireTx() error {
 
 //BackupWalletData
 func (wm *WalletManager) BackupWalletData() error {
-
+	walletDbName := "wallet.db_" + strconv.FormatInt(time.Now().Unix(), 10)
 	//备份钱包文件
-	return file.Copy(wm.Config.walletdatafile, wm.Config.walletdatabackupdir)
+	return file.Copy(wm.Config.walletdatafile, wm.Config.walletdatabackupdir+walletDbName)
+
+}
+
+//打币 远程调用
+func (wm *WalletManager) TransferCoinRemote(toAddress, toAmount string) (string, error) {
+
+	if wm.Config.enableserver {
+		return "", fmt.Errorf("server mode can not use transferCoin, use client ")
+	}
+	return wm.client.TransFCoin(toAddress, toAmount)
+
+}
+
+//汇总 远程调用
+func (wm *WalletManager) SummaryWalletProcessRemote(summaryToAddress string) (string, string, string, error) {
+
+	if wm.Config.enableserver {
+		return "", "", "", fmt.Errorf("server mode can not use summaryCoin, use client ")
+	}
+	return wm.client.SummaryToAddress(summaryToAddress)
+
+}
+
+//验证地址格式
+func (wm *WalletManager) ValidateAddress(address string) (bool, error) {
+	return wm.walletClient.ValidateAddress(address)
+
+}
+
+//远程验证地址格式
+func (wm *WalletManager) ValidateAddressRemote(address string) (bool, error) {
+	if wm.Config.enableserver {
+		return false, fmt.Errorf("server mode can not use ValidateAddressRemote, use client ")
+	}
+	return wm.client.ValidateAddress(address)
 
 }

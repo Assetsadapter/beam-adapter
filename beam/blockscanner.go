@@ -58,7 +58,7 @@ func NewBEAMBlockScanner(wm *WalletManager) *BEAMBlockScanner {
 
 //GetBalanceByAddress 查询地址余额
 func (bs *BEAMBlockScanner) GetBalanceByAddress(address ...string) ([]*openwallet.Balance, error) {
-	wallet, err := bs.wm.walletClient.GetWalletStatus()
+	wallet, err := bs.wm.client.GetWalletStatus()
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (bs *BEAMBlockScanner) GetBalanceByAddress(address ...string) ([]*openwalle
 //GetCurrentBlock 获取当前最新区块
 func (bs *BEAMBlockScanner) GetCurrentBlock() (*Block, error) {
 
-	wallet, err := bs.wm.walletClient.GetWalletStatus()
+	wallet, err := bs.wm.client.GetWalletStatus()
 	if err != nil {
 		return nil, err
 	}

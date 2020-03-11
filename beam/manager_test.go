@@ -51,5 +51,3 @@ func TestWalletManager_BackupWalletData(t *testing.T) {
 		return
 	}
 }
-
-

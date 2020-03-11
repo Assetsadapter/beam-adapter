@@ -327,3 +327,126 @@ func (c *Client) GetBlockByHeight(height uint64) (*Block, error) {
 
 	return block, retErr
 }
+
+//GetWalletStatus 获取钱包当前状态
+func (c *Client) GetWalletStatus() (*WalletStatus, error) {
+
+	var (
+		WalletStatus *WalletStatus
+		retErr       error
+	)
+
+	if !c.node.IsConnectPeer(trustHostID) {
+		return nil, fmt.Errorf("client had disconnected: %s", trustHostID)
+	}
+
+	err := c.node.Call(trustHostID, "getWalletStatus", nil,
+		true, func(resp owtp.Response) {
+			if resp.Status == owtp.StatusSuccess {
+				retErr = json.Unmarshal([]byte(resp.JsonData().Raw), &WalletStatus)
+			} else {
+				retErr = openwallet.Errorf(resp.Status, resp.Msg)
+			}
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	return WalletStatus, retErr
+
+}
+
+//打币
+func (c *Client) TransFCoin(toAddress, toAmount string) (string, error) {
+
+	var (
+		txId   string
+		retErr error
+	)
+
+	if !c.node.IsConnectPeer(trustHostID) {
+		return "", fmt.Errorf("client had disconnected: %s", trustHostID)
+	}
+	params := map[string]interface{}{
+		"toAddress": toAddress,
+		"toAmount":  toAmount,
+	}
+
+	err := c.node.Call(trustHostID, "transFCoin", params,
+		true, func(resp owtp.Response) {
+			if resp.Status == owtp.StatusSuccess {
+				txId = resp.JsonData().Get("txId").String()
+			} else {
+				retErr = openwallet.Errorf(resp.Status, resp.Msg)
+			}
+		})
+	if err != nil {
+		return "", err
+	}
+
+	return txId, retErr
+}
+
+//打币
+func (c *Client) SummaryToAddress(summaryAddress string) (string, string, string, error) {
+
+	var (
+		txId          string
+		summaryAmount string
+		feeAmount     string
+		retErr        error
+	)
+
+	if !c.node.IsConnectPeer(trustHostID) {
+		return "", "", "", fmt.Errorf("client had disconnected: %s", trustHostID)
+	}
+	params := map[string]interface{}{
+		"summaryAddress": summaryAddress,
+	}
+
+	err := c.node.Call(trustHostID, "summaryToAddress", params,
+		true, func(resp owtp.Response) {
+			if resp.Status == owtp.StatusSuccess {
+				txId = resp.JsonData().Get("txId").String()
+				summaryAmount = resp.JsonData().Get("summaryAmount").String()
+				feeAmount = resp.JsonData().Get("feeAmount").String()
+			} else {
+				retErr = openwallet.Errorf(resp.Status, resp.Msg)
+			}
+		})
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return txId, summaryAmount, feeAmount, retErr
+}
+
+//验证地址
+func (c *Client) ValidateAddress(address string) (bool, error) {
+
+	var (
+		isValid bool
+		retErr  error
+	)
+
+	if !c.node.IsConnectPeer(trustHostID) {
+		return false, fmt.Errorf("client had disconnected: %s", trustHostID)
+	}
+	params := map[string]interface{}{
+		"address": address,
+	}
+
+	err := c.node.Call(trustHostID, "validateAddress", params,
+		true, func(resp owtp.Response) {
+			if resp.Status == owtp.StatusSuccess {
+				isValid = resp.JsonData().Get("isValid").Bool()
+			} else {
+				retErr = openwallet.Errorf(resp.Status, resp.Msg)
+			}
+		})
+	if err != nil {
+		return false, err
+	}
+
+	return isValid, retErr
+}

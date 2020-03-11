@@ -2,9 +2,13 @@ package openwtester
 
 import (
 	"fmt"
+	"github.com/blocktree/go-owcrypt"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/openwallet"
+	"github.com/blocktree/openwallet/owtp"
+	"github.com/mr-tron/base58"
 	"testing"
+	"time"
 )
 
 func TestCreateLocalAddress(t *testing.T) {
@@ -20,7 +24,7 @@ func TestCreateLocalAddress(t *testing.T) {
 }
 
 func TestCreateRemoteAddress(t *testing.T) {
-	addrs, err := clientNode.CreateRemoteWalletAddress(10, 10)
+	addrs, err := clientNode.CreateRemoteWalletAddress(1, 10)
 	if err != nil {
 		t.Errorf("CreateRemoteWalletAddress failed unexpected error: %v\n", err)
 		return
@@ -29,6 +33,7 @@ func TestCreateRemoteAddress(t *testing.T) {
 	for i, a := range addrs {
 		log.Infof("%d: %s", i, a)
 	}
+	time.Sleep(30 * time.Second)
 }
 
 func TestGetWalletBalance(t *testing.T) {
@@ -74,13 +79,15 @@ func TestGetRemoteWalletAddress(t *testing.T) {
 }
 
 func TestGetRemoteBlockByHeight(t *testing.T) {
-	block, err := clientNode.GetRemoteBlockByHeight(313212)
+	block, err := clientNode.GetRemoteBlockByHeight(1000)
 	if err != nil {
 		t.Errorf("CreateRemoteWalletAddress failed unexpected error: %v\n", err)
 		return
 	}
 
 	log.Infof("%+v", block)
+	time.Sleep(3 * time.Second)
+
 }
 
 func TestSendTransaction(t *testing.T) {
@@ -143,4 +150,29 @@ func TestStartSummaryWallet(t *testing.T) {
 	}
 	log.Info("txid=", txid, " summaryAmount=", summaryAmount, " feeAmount = ", feeAmount)
 
+}
+
+func TestGetKey(t *testing.T) {
+	cert := owtp.NewRandomCertificate()
+	log.Info(base58.Encode(cert.PrivateKeyBytes()))
+	nodeID := owcrypt.Hash(cert.PublicKeyBytes(), 0, owcrypt.HASH_ALG_SHA256)
+	log.Info(base58.Encode(nodeID))
+}
+
+func TestWalletManager_BackupWalletData(t *testing.T) {
+	err := clientNode.BackupWalletData()
+	if err != nil {
+		t.Errorf("BackupWalletData failed unexpected error: %v\n", err)
+		return
+	}
+}
+
+func TestValidateAddress(t *testing.T) {
+	isVaild, err := clientNode.ValidateAddress("b4ac9b088c4ea5f8b40f91113219216a596f082e27a809449c45add0c326e7dfb8")
+	if err != nil {
+		t.Errorf("vaild address failed unexpected error: %v\n", err)
+		return
+	}
+
+	log.Infof("result: %v", isVaild)
 }

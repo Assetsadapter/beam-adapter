@@ -41,13 +41,20 @@ func getWalleManager(c *cli.Context) *beam.WalletManager {
 
 //walletserver 钱包服务
 func walletserver(c *cli.Context) error {
-
+	var (
+		endRunning = make(chan bool, 1)
+	)
 	if wm := getWalleManager(c); wm != nil {
-		err := wm.StartSummaryWallet()
-		if err != nil {
-			log.Error("unexpected error: ", err)
-			return err
-		}
+		log.Error("doing something")
+
+		//err := wm.StartSummaryWallet()
+		//if err != nil {
+		//	log.Error("unexpected error: ", err)
+		//	return err
+		//}
+		//
+		<-endRunning
 	}
+
 	return nil
 }

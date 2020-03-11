@@ -145,3 +145,14 @@ func TestWalletClient_CancelTx(t *testing.T) {
 	log.Infof("flag: %v", flag)
 
 }
+
+func TestValidateAddress(t *testing.T) {
+	isVaild, err := tw.walletClient.ValidateAddress("46bf4426eb8142f58898ba9ccf9b351b")
+	if err != nil {
+		t.Errorf("vaild address failed unexpected error: %v\n", err)
+		return
+	}
+
+	log.Infof("result: %v", isVaild)
+
+}
