@@ -1,9 +1,13 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/Assetsadapter/beam-adapter/beam"
 	"github.com/astaxie/beego/config"
+	"github.com/blocktree/go-owcrypt"
 	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/owtp"
+	"github.com/mr-tron/base58"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -17,6 +21,14 @@ var (
 			Usage:     "start the wallet server",
 			ArgsUsage: "",
 			Action:    walletserver,
+			Category:  "BEAM-SERVER COMMANDS",
+		},
+		{
+			//随机产生一个节点数据
+			Name:      "randomCert",
+			Usage:     "random generate a client node cert info",
+			ArgsUsage: "",
+			Action:    randomGenerateClientInfo,
 			Category:  "BEAM-SERVER COMMANDS",
 		},
 	}
@@ -57,4 +69,12 @@ func walletserver(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+//随机生成clinet cert info
+func randomGenerateClientInfo(c *cli.Context){
+	cert := owtp.NewRandomCertificate()
+	fmt.Printf("cert:=%s\n",base58.Encode(cert.PrivateKeyBytes()))
+	nodeID := owcrypt.Hash(cert.PublicKeyBytes(), 0, owcrypt.HASH_ALG_SHA256)
+	fmt.Printf("nodeId:=%s\n",base58.Encode(nodeID))
 }

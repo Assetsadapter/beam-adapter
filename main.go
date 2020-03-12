@@ -29,7 +29,6 @@ SUBCOMMANDS:
 	// The app that holds all commands and flags.
 	app = NewApp(commands.GitRev, "the beam wallet server command line interface")
 )
-
 func init() {
 	cli.AppHelpTemplate = `{{.Name}} {{if .Flags}}[global options] {{end}}command{{if .Flags}} [command options]{{end}} [arguments...]
 

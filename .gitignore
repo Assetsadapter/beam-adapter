@@ -6,3 +6,4 @@ go.sum
 .idea
 *.log
 .vscode
+beam-adapter
